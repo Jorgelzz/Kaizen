@@ -1,14 +1,64 @@
 import {
   isRouteErrorResponse,
+  Link,
   Links,
   Meta,
   Outlet,
   Scripts,
   ScrollRestoration,
+  useLoaderData,
+  type LoaderFunctionArgs,
 } from "react-router";
 
 import type { Route } from "./+types/root";
 import "./app.css";
+import clsx from "clsx";
+import {
+  PreventFlashOnWrongTheme,
+  ThemeProvider,
+  useTheme,
+} from "remix-themes";
+// or "remix-utils" if using that package
+
+import { themeSessionResolver } from "./sessions.server";
+// Return the theme from the session storage using the loader
+export async function loader({ request }: LoaderFunctionArgs) {
+  const { getTheme } = await themeSessionResolver(request);
+  return {
+    theme: getTheme(),
+  };
+}
+// Wrap your app with ThemeProvider.
+// `specifiedTheme` is the stored theme in the session storage.
+// `themeAction` is the action name that's used to change the theme in the session storage.
+export default function AppWithProviders() {
+  const data = useLoaderData<typeof loader>();
+  return (
+    <ThemeProvider specifiedTheme={data.theme} themeAction="/action/set-theme">
+      <App />
+    </ThemeProvider>
+  );
+}
+
+export function App() {
+  const data = useLoaderData<typeof loader>();
+  const [theme] = useTheme();
+  return (
+    <>
+      <html lang="en" className={clsx(theme)}>
+        <head>
+          <Meta />
+          <PreventFlashOnWrongTheme ssrTheme={Boolean(data.theme)} />
+        </head>
+        <body>
+          <Outlet />
+          <ScrollRestoration />
+          <Scripts />
+        </body>
+      </html>
+    </>
+  );
+}
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -25,7 +75,7 @@ export const links: Route.LinksFunction = () => [
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className="dark">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
