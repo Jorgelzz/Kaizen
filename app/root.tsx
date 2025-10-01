@@ -15,12 +15,14 @@ import "./app.css";
 import clsx from "clsx";
 import {
   PreventFlashOnWrongTheme,
+  Theme,
   ThemeProvider,
   useTheme,
 } from "remix-themes";
 // or "remix-utils" if using that package
 
 import { themeSessionResolver } from "./sessions.server";
+import { cn } from "./lib/utils";
 // Return the theme from the session storage using the loader
 export async function loader({ request }: LoaderFunctionArgs) {
   const { getTheme } = await themeSessionResolver(request);
@@ -45,10 +47,10 @@ export function App() {
   const [theme] = useTheme();
   return (
     <>
-      <html lang="en" className={clsx(theme)}>
+      <html lang="en" className={clsx(theme)} suppressHydrationWarning>
         <head>
           <Meta />
-          <PreventFlashOnWrongTheme ssrTheme={Boolean(data.theme)} />
+          <PreventFlashOnWrongTheme ssrTheme={Boolean(theme)} />
         </head>
         <body>
           <Outlet />
@@ -75,7 +77,8 @@ export const links: Route.LinksFunction = () => [
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="dark">
+    <>
+      <html lang="en" suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -88,6 +91,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Scripts />
       </body>
     </html>
+    </>
   );
 }
 
